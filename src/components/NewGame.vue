@@ -16,9 +16,11 @@
                 <table align="center">
                   <tr v-for="(squareRow, rowKey) in this.newGame.gameBoard.squares" :key="rowKey">
                   <td v-for="(squareCol, colKey) in squareRow" :key="colKey">
-                  <div class="cell" @click="onCellLeftClicked(rowKey, colKey)" @click.right="onCellRightClicked(rowKey, colKey)">
-                        <div class="content" v-show="isValueVisible(rowKey, colKey)">{{ squareCol.bombsCloseTo }}</div>
-                        <div class="flagged" v-show="isFlagged(rowKey, colKey)">"F"</div>
+                  <div @click="onCellLeftClicked(squareCol)" @click.right="onCellRightClicked(squareCol)">
+                        <div class="bombclose" v-show="isValueVisibleAndBomb(squareCol)">{{ squareCol.bombsCloseTo }}</div>
+                        <div class="revealed" v-show="isValueVisibleAndFree(squareCol)"></div>
+                        <div class="flagged" v-show="isFlagged(squareCol)">"F"</div>
+                        <div class="closed" v-show="isClosed(squareCol)"></div> 
                     </div>
                   </td>
                 </tr>
@@ -59,11 +61,11 @@ export default {
           console.log(e);
         });
     },
-    onCellLeftClicked(row, col) {
+    onCellLeftClicked(squareCol) {
          var data = {
           gameId: this.newGame.gameId,
-          rowP: row,
-          colP:col
+          rowP: squareCol.rPosition,
+          colP: squareCol.cPosition
         };
         http
         .post("/game/revealSquare", data)
@@ -73,21 +75,26 @@ export default {
           this.newGame.gameBoard.squares[data.rowP][data.colP].opened=true;
         })
         .catch(e => {
-           console.log(e);
          alert("YOU LOOSE!");
           this.gameLoaded = false;
           this.newGame = null;
           this.userName = null;
         });
     },
-    onCellRightClicked(row, col){
+    onCellRightClicked(squareCol){
        console.log("Flagged!");
     },
-    isValueVisible(row, col) {
-        return this.newGame.gameBoard.squares[row][col].opened == true;
+    isValueVisibleAndBomb(squareCol) {
+        return (squareCol.opened == true && squareCol.marked == false  && squareCol.bombsCloseTo > 0);
     },
-    isFlagged(row, col) {
-        return this.newGame.gameBoard.squares[row][col].marked == true;
+    isValueVisibleAndFree(squareCol) {
+        return (squareCol.opened == true && squareCol.marked == false  && squareCol.bombsCloseTo  == 0);
+    },
+    isFlagged(squareCol) {
+        return (squareCol.opened == false && squareCol.marked == true);
+    },
+    isClosed(squareCol) {
+      return (squareCol.opened == false && squareCol.marked == false);
     }
   }
 };
@@ -99,7 +106,12 @@ export default {
   margin: auto;
 }
 .revealed {
-    background-color: #fff;
+    display: table-cell;
+    position: relative;
+    background-color: rgb(255, 255, 255);
+    font-weight: bold;
+    width:20px;
+    height:20px;
 }
 .table {
   border-collapse: collapse;
@@ -115,7 +127,7 @@ export default {
   max-width: 450px;
   margin: auto;
 }
-.cell {
+.closed {
     display: table-cell;
     position: relative;
     background-color: #eee;
@@ -132,5 +144,8 @@ export default {
     width:20px;
     height:20px;
     border: #ddd 1px solid;
+}
+.bombclose{
+  font-weight: bold;
 }
 </style>
