@@ -54,7 +54,6 @@ export default {
         .post("/game/startNewGame", data)
         .then(response => {
           this.newGame = response.data;
-          console.log(this.newGame.gameBoard.squares);
           this.gameLoaded = true;
         })
         .catch(e => {
@@ -65,20 +64,28 @@ export default {
          var data = {
           gameId: this.newGame.gameId,
           rowP: squareCol.rPosition,
-          colP: squareCol.cPosition
+          columnP: squareCol.cPosition
         };
         http
         .post("/game/revealSquare", data)
         .then(response => {
           console.log(response.data);
-          //Setting up true for now to see if works
-          this.newGame.gameBoard.squares[data.rowP][data.colP].opened=true;
+          if(response.data.gameBoard.gameStatus == "FINISHED_LOOSE"){
+            this.gameLoaded = false;
+            this.newGame = null;
+            this.userName = null;
+            alert("YOU LOOSE!");
+          } else{
+            //Reload data
+            this.$nextTick().then(() => {
+              this.newGame = response.data;
+            });
+          }
+           
+            
         })
         .catch(e => {
-         alert("YOU LOOSE!");
-          this.gameLoaded = false;
-          this.newGame = null;
-          this.userName = null;
+         alert("Error Found");
         });
     },
     onCellRightClicked(squareCol){

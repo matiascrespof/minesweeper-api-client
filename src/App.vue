@@ -5,7 +5,7 @@
             <h3>Minesweeper Game</h3>
         </div>
         <nav>
-            <router-link class="btn btn-primary" to="/startNewGame">New Game</router-link>
+            <router-link class="btn btn-primary" to="/startNewGame">New Begginer Game</router-link>
             <!-- <router-link class="btn btn-primary" to="/getGame">Resume Game</router-link> -->
         </nav>
         <br/>
