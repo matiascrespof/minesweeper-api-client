@@ -16,10 +16,10 @@
                 <table align="center">
                   <tr v-for="(squareRow, rowKey) in this.newGame.gameBoard.squares" :key="rowKey">
                   <td v-for="(squareCol, colKey) in squareRow" :key="colKey">
-                  <div @click="onCellLeftClicked(squareCol)" @click.right="onCellRightClicked(squareCol)">
+                  <div @click="onCellLeftClicked(squareCol)" @contextmenu.prevent="onCellRightClicked(squareCol)">
                         <div class="bombclose" v-show="isValueVisibleAndBomb(squareCol)">{{ squareCol.bombsCloseTo }}</div>
                         <div class="revealed" v-show="isValueVisibleAndFree(squareCol)"></div>
-                        <div class="flagged" v-show="isFlagged(squareCol)">"F"</div>
+                        <div class="flagged" v-show="isFlagged(squareCol)"></div>
                         <div class="closed" v-show="isClosed(squareCol)"></div> 
                     </div>
                   </td>
@@ -47,11 +47,12 @@ export default {
   },
   methods: {
     createNewGame() {
+      this.gameLoaded = false
       var data = {
         name: this.userName
       };
       http
-        .post("/game/startNewGame", data)
+        .post("/game/startNewGame", data, { useCredentails: true })
         .then(response => {
           this.newGame = response.data;
           this.gameLoaded = true;
@@ -61,19 +62,20 @@ export default {
         });
     },
     onCellLeftClicked(squareCol) {
-         var data = {
+        var data = {
           gameId: this.newGame.gameId,
           rowP: squareCol.rPosition,
           columnP: squareCol.cPosition
         };
         http
-        .post("/game/revealSquare", data)
+        .post("/game/revealSquare", data, { useCredentails: true })
         .then(response => {
           console.log(response.data);
           if(response.data.gameBoard.gameStatus == "FINISHED_LOOSE"){
             this.gameLoaded = false;
             this.newGame = null;
             this.userName = null;
+            //Show bombs instead alert
             alert("YOU LOOSE!");
           } else{
             //Reload data
@@ -89,7 +91,33 @@ export default {
         });
     },
     onCellRightClicked(squareCol){
-       console.log("Flagged!");
+       var data = {
+          gameId: this.newGame.gameId,
+          rowP: squareCol.rPosition,
+          columnP: squareCol.cPosition
+        };
+        http
+        .post("/game/flagSquare", data, { useCredentails: true })
+        .then(response => {
+          console.log(response.data);
+          if(response.data.gameBoard.gameStatus == "FINISHED_LOOSE"){
+            this.gameLoaded = false;
+            this.newGame = null;
+            this.userName = null;
+            //Show bombs instead alert
+            alert("YOU LOOSE!");
+          } else{
+            //Reload data
+            this.$nextTick().then(() => {
+              this.newGame = response.data;
+            });
+          }
+           
+            
+        })
+        .catch(e => {
+         alert("Error Found");
+        });
     },
     isValueVisibleAndBomb(squareCol) {
         return (squareCol.opened == true && squareCol.marked == false  && squareCol.bombsCloseTo > 0);
